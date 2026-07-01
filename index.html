@@ -23,28 +23,33 @@
 
         #game-wrapper {
             background: #16213e;
-            border: 4px solid #d4af37; /* Gold */
+            border: 4px solid #d4af37; 
             border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
-            padding: 20px;
+            width: 95vw;             /* Stretches to screen width */
+            max-width: 1600px;       /* Massive max width */
+            height: 95vh;            /* Stretches to screen height */
+            padding: 3vh 3vw;
+            display: flex;
+            flex-direction: column;
             text-align: center;
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
             position: relative;
+            box-sizing: border-box;
         }
 
         h1 {
             font-family: 'Cinzel', serif;
             color: #d4af37;
+            font-size: clamp(2rem, 5vw, 4rem); /* Responsive scaling */
             margin-top: 0;
-            margin-bottom: 5px;
+            margin-bottom: 1vh;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         #level-info {
-            font-size: 1.2rem;
+            font-size: clamp(1.2rem, 2vw, 2rem);
             color: #a8dadc;
-            margin-bottom: 20px;
+            margin-bottom: 2vh;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -55,20 +60,21 @@
             justify-content: space-between;
             align-items: center;
             background: #0f3460;
-            padding: 30px 20px;
+            padding: 2vh 5vw;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 3vh;
             position: relative;
             border: 2px solid #2a4b7c;
             overflow: hidden;
-            height: 200px;
+            flex-grow: 1; /* Automatically takes up all middle vertical space */
         }
 
         /* Health Bar */
         #health-bar-bg {
             position: absolute;
-            top: 10px;
-            right: 20px;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
             width: 150px;
             height: 15px;
             background: #333;
@@ -85,8 +91,9 @@
         }
 
         #hero-container {
-            width: 120px;
-            height: 160px;
+            width: 25vw;
+            max-width: 300px;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -98,20 +105,22 @@
         #hero-img {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Right-sizes the image without stretching */
-            filter: drop-shadow(0 0 10px rgba(242, 169, 0, 0.3)); /* Traces the transparent PNG outline */
+            max-height: 40vh;
+            object-fit: contain; 
+            filter: drop-shadow(0 0 10px rgba(242, 169, 0, 0.3)); 
             animation: breathe 2.5s infinite ease-in-out;
             transition: filter 0.3s;
         }
 
         .hero-charged #hero-img {
-            filter: drop-shadow(0 0 25px rgba(242, 169, 0, 1)) brightness(1.2) !important;
+            filter: drop-shadow(0 0 35px rgba(242, 169, 0, 1)) brightness(1.2) !important;
         }
 
         #enemy-container {
             position: relative;
-            width: 160px;
-            height: 160px;
+            width: 25vw;
+            max-width: 300px;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -119,99 +128,130 @@
 
         #enemy-name {
             position: absolute;
-            top: -25px;
-            font-size: 14px;
+            top: -50px;
+            font-size: clamp(14px, 1.5vw, 24px);
             color: #ff6b6b;
             font-weight: bold;
             width: 100%;
             text-align: center;
+            white-space: nowrap;
         }
 
         #enemy-img {
-            width: 120px;
-            height: 160px;
-            object-fit: contain; /* Right-sizes the demon */
+            width: 100%;
+            height: 100%;
+            max-height: 40vh;
+            object-fit: contain; 
             filter: drop-shadow(0 0 15px rgba(138, 43, 226, 0.6));
             animation: float-idle 3s infinite ease-in-out;
         }
 
-        /* Idle Animations for Static Images */
         @keyframes breathe {
             0%, 100% { transform: scale(1) translateY(0); }
-            50% { transform: scale(1.02) translateY(-3px); }
+            50% { transform: scale(1.02) translateY(-1vh); }
         }
 
         @keyframes float-idle {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            50% { transform: translateY(-2vh); }
         }
 
-        /* Dash Attack Animation */
+        /* Dynamic Dash Attack using Viewport Width */
         .hero-attacking {
             animation: dash-attack 0.5s ease-in-out forwards;
         }
         @keyframes dash-attack {
             0% { transform: translateX(0) scale(1); }
-            40% { transform: translateX(180px) scale(1.1); }
-            50% { transform: translateX(180px) scale(1.1); }
+            40% { transform: translateX(35vw) scale(1.1); }
+            50% { transform: translateX(35vw) scale(1.1); }
             100% { transform: translateX(0) scale(1); }
         }
 
-        /* Enemy Hit Reactions */
         .enemy-hit { animation: shake 0.4s; filter: brightness(2) !important; }
-        .enemy-dead { animation: fade-out-drop 1s forwards; }
+        .enemy-dead #enemy-movement-wrapper { animation: fade-out-drop 1s forwards; }
 
         @keyframes shake {
             0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
+            25% { transform: translateX(-1vw); }
+            50% { transform: translateX(1vw); }
+            75% { transform: translateX(-1vw); }
             100% { transform: translateX(0); }
         }
         @keyframes fade-out-drop {
             0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(50px); }
+            100% { opacity: 0; transform: translateY(10vh); }
         }
 
-        /* Enemy Movement Patterns */
+        /* Enemy Movement Animations scaled for large screens */
         .move-side-to-side { animation: side-side 3s ease-in-out infinite alternate; }
         .move-diagonal { animation: diagonal 2.5s ease-in-out infinite alternate; }
         .move-circular { animation: circular 4s linear infinite; }
         .move-blink { animation: blink-jump 4s infinite; }
         .move-random { animation: random-dart 3s infinite; }
 
-        @keyframes side-side { 0% { transform: translateX(-60px); } 100% { transform: translateX(60px); } }
-        @keyframes diagonal { 0% { transform: translate(-50px, -40px); } 100% { transform: translate(50px, 40px); } }
-        @keyframes circular { 0% { transform: translate(0, 0); } 25% { transform: translate(50px, -30px); } 50% { transform: translate(0, 0); } 75% { transform: translate(-50px, 30px); } 100% { transform: translate(0, 0); } }
-        @keyframes blink-jump { 0%, 20% { opacity: 1; transform: translate(0,0); } 25% { opacity: 0; transform: translate(0,0); } 30% { opacity: 0; transform: translate(-60px, 20px); } 35%, 60% { opacity: 1; transform: translate(-60px, 20px); } 65% { opacity: 0; transform: translate(-60px, 20px); } 70% { opacity: 0; transform: translate(50px, -30px); } 75%, 95% { opacity: 1; transform: translate(50px, -30px); } 100% { opacity: 0; transform: translate(0,0); } }
-        @keyframes random-dart { 0%, 100% { transform: translate(0,0); } 15%, 25% { transform: translate(60px, -15px); } 40%, 50% { transform: translate(-50px, -40px); } 65%, 75% { transform: translate(-60px, 30px); } 90% { transform: translate(40px, 25px); } }
+        @keyframes side-side {
+            0% { transform: translateX(-15vw); }
+            100% { transform: translateX(15vw); }
+        }
+        @keyframes diagonal {
+            0% { transform: translate(-10vw, -10vh); }
+            100% { transform: translate(10vw, 10vh); }
+        }
+        @keyframes circular {
+            0% { transform: transform: translate(0, 0); }
+            25% { transform: translate(10vw, -8vh); }
+            50% { transform: translate(0, 0); }
+            75% { transform: translate(-10vw, 8vh); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes blink-jump {
+            0%, 20% { opacity: 1; transform: translate(0,0); }
+            25% { opacity: 0; transform: translate(0,0); }
+            30% { opacity: 0; transform: translate(-12vw, 5vh); }
+            35%, 60% { opacity: 1; transform: translate(-12vw, 5vh); }
+            65% { opacity: 0; transform: translate(-12vw, 5vh); }
+            70% { opacity: 0; transform: translate(10vw, -8vh); }
+            75%, 95% { opacity: 1; transform: translate(10vw, -8vh); }
+            100% { opacity: 0; transform: translate(0,0); }
+        }
+        @keyframes random-dart {
+            0%, 100% { transform: translate(0,0); }
+            15%, 25% { transform: translate(12vw, -3vh); }
+            40%, 50% { transform: translate(-10vw, -8vh); }
+            65%, 75% { transform: translate(-12vw, 6vh); }
+            90% { transform: translate(8vw, 5vh); }
+        }
 
-        /* Strike Zone & Slash Visuals */
         #arena-strike-zone {
             position: absolute;
-            top: 20px;
-            bottom: 20px;
+            top: 5vh;
+            bottom: 5vh; 
             left: 50%;
             transform: translateX(-50%);
-            width: 70px;
-            border: 3px dashed rgba(46, 204, 113, 0.6);
+            width: clamp(100px, 15vw, 200px); /* Scales with screen */
+            border: 4px dashed rgba(46, 204, 113, 0.6);
             background: rgba(46, 204, 113, 0.15);
             border-radius: 12px;
-            z-index: 5; 
+            z-index: 1; 
             display: none;
             pointer-events: none;
-            box-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.3), inset 0 0 10px rgba(46, 204, 113, 0.2);
         }
+
         .show-zone {
             display: block !important;
             animation: pulse-zone 1s infinite alternate;
         }
-        @keyframes pulse-zone { 0% { border-color: rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.1); } 100% { border-color: rgba(46, 204, 113, 0.9); background: rgba(46, 204, 113, 0.3); box-shadow: 0 0 20px rgba(46, 204, 113, 0.6); } }
+
+        @keyframes pulse-zone {
+            0% { border-color: rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.1); }
+            100% { border-color: rgba(46, 204, 113, 0.9); background: rgba(46, 204, 113, 0.25); box-shadow: 0 0 30px rgba(46, 204, 113, 0.6); }
+        }
 
         #slash-effect {
             position: absolute;
-            width: 100px;
-            height: 100px;
+            width: 200px;
+            height: 200px;
             background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10,90 L90,10" stroke="%23fff" stroke-width="8" stroke-linecap="round"/><path d="M10,90 L90,10" stroke="%23f2a900" stroke-width="4" stroke-linecap="round"/></svg>') no-repeat center;
             background-size: contain;
             opacity: 0;
@@ -222,16 +262,17 @@
             transform: translate(-50%, -50%) scale(0.5);
         }
         .show-slash { animation: slash-anim 0.3s ease-out forwards; }
-        @keyframes slash-anim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); } }
+        @keyframes slash-anim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); } }
 
         #message-log {
-            min-height: 50px;
+            min-height: 10vh; /* Increased height to fit AI generated lore */
             font-style: italic;
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
             color: #a8dadc;
-            margin-bottom: 20px;
-            padding: 10px;
+            margin-bottom: 2vh;
+            padding: 1.5vh;
             background: rgba(0,0,0,0.4);
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -239,25 +280,76 @@
 
         #math-ui {
             display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 4vw;
+            margin-bottom: 2vh;
+            width: 100%;
+        }
+        #math-core-ui, #math-hint-ui {
+            display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 1.5vh;
+            flex: 1;
+            min-width: 250px;
+            max-width: 450px;
         }
-        #equation { font-size: 28px; font-weight: bold; }
+        #equation { font-size: clamp(32px, 4vw, 48px); font-weight: bold; margin: 0; }
         #math-input {
-            font-size: 24px; padding: 10px; width: 120px; text-align: center;
-            border-radius: 8px; border: 2px solid #d4af37; background: #1a1a2e; color: white;
+            font-size: clamp(24px, 3vw, 36px); 
+            padding: 1vh 2vw; 
+            width: 200px; 
+            text-align: center;
+            border-radius: 8px; border: 3px solid #d4af37; background: #1a1a2e; color: white;
             outline: none; transition: box-shadow 0.2s;
         }
-        #math-input:focus { box-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
+        #math-input:focus { box-shadow: 0 0 15px rgba(212, 175, 55, 0.6); }
 
-        #timing-ui { display: none; }
+        #hint-btn {
+            background: linear-gradient(180deg, #9b59b6, #8e44ad);
+            font-size: clamp(14px, 1.5vw, 22px);
+            padding: 1vh 2vw;
+            border-color: #8e44ad;
+            box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
+            margin-top: 1vh;
+        }
+        #hint-btn:disabled {
+            filter: grayscale(1);
+            cursor: not-allowed;
+        }
+        #hint-text {
+            font-size: clamp(14px, 1.5vw, 20px);
+            color: #e056fd;
+            margin-top: 1vh;
+            width: 100%;
+            font-style: italic;
+            text-align: center;
+            min-height: 60px; /* Keeps the UI from jumping when text loads */
+        }
+
+        #timing-ui {
+            display: none;
+            width: 100%;
+            margin: 0 auto;
+            margin-bottom: 2vh;
+        }
 
         button {
             background: linear-gradient(180deg, #f1c40f, #f39c12);
-            color: #1a1a2e; font-family: 'Cinzel', serif; font-size: 20px; font-weight: bold;
-            border: 2px solid #d4af37; padding: 12px 30px; border-radius: 8px;
-            cursor: pointer; transition: transform 0.1s, filter 0.2s; text-transform: uppercase;
+            color: #1a1a2e; 
+            font-family: 'Cinzel', serif; 
+            font-size: clamp(20px, 2vw, 30px); 
+            font-weight: bold;
+            border: 2px solid #d4af37; 
+            padding: 2vh 4vw; 
+            border-radius: 12px;
+            cursor: pointer; 
+            transition: transform 0.1s, filter 0.2s; 
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
         }
         button:hover { filter: brightness(1.2); transform: scale(1.05); }
         button:active { transform: scale(0.95); }
@@ -290,9 +382,16 @@
         <div id="message-log">A new Demon appears! Calculate to prime your blade.</div>
 
         <div id="math-ui">
-            <span id="equation">?</span>
-            <input type="number" id="math-input" placeholder="?" onkeypress="handleEnter(event)" />
-            <button onclick="chargeSword()">Charge Magic</button>
+            <div id="math-core-ui">
+                <span id="equation">?</span>
+                <input type="number" id="math-input" placeholder="?" onkeypress="handleEnter(event)" />
+                <button onclick="chargeSword()">Charge Magic</button>
+            </div>
+            
+            <div id="math-hint-ui">
+                <button id="hint-btn" onclick="getHint()">Ask Wizard for Hint</button>
+                <div id="hint-text"></div>
+            </div>
         </div>
 
         <div id="timing-ui">
@@ -368,13 +467,13 @@
         let questionDamage = 1;  
         let currentAnimSpeed = 3;
         
-        // Enemy Data (All using demon_4_action.png for now!)
+        // Enemy Data
         const demonList = [
-            { name: "Dust-Mite Golem", file: "demon_4_action.png", moveClass: "move-side-to-side", baseSpeed: 3 },
+            { name: "Dust-Mite Golem", file: "demon_1_action.png", moveClass: "move-side-to-side", baseSpeed: 3 },
             { name: "Chaos Construct", file: "demon_4_action.png", moveClass: "move-diagonal", baseSpeed: 2.5 },
-            { name: "Rune Weaver", file: "demon_4_action.png", moveClass: "move-circular", baseSpeed: 4 },
+            { name: "Rune Weaver", file: "demon_1_action.png", moveClass: "move-circular", baseSpeed: 4 },
             { name: "Void Emissary", file: "demon_4_action.png", moveClass: "move-blink", baseSpeed: 4 },
-            { name: "Shadow Dancer", file: "demon_4_action.png", moveClass: "move-random", baseSpeed: 3 }
+            { name: "Shadow Dancer", file: "demon_1_action.png", moveClass: "move-random", baseSpeed: 3 }
         ];
 
         // DOM Elements
@@ -384,6 +483,10 @@
         const enemyHealthEl = document.getElementById('health-bar-fill');
         const mathUI = document.getElementById('math-ui');
         const timingUI = document.getElementById('timing-ui');
+        
+        const hintBtn = document.getElementById('hint-btn');
+        const hintText = document.getElementById('hint-text');
+
         const heroContainer = document.getElementById('hero-container');
         const enemyContainer = document.getElementById('enemy-container');
         const enemyNameEl = document.getElementById('enemy-name');
@@ -393,7 +496,125 @@
         const strikeZoneEl = document.getElementById('arena-strike-zone');
         const levelInfoEl = document.getElementById('level-info');
 
+        // --- Audio Encoding Helpers for Gemini TTS ---
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1;
+            const byteRate = sampleRate * numChannels * 2;
+            const blockAlign = numChannels * 2;
+            const buffer = new ArrayBuffer(44 + pcm16.byteLength);
+            const view = new DataView(buffer);
+
+            const writeString = (view, offset, string) => {
+                for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+            };
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16.byteLength, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16.byteLength, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        async function fetchGeminiTTS(text, voiceName = "Charon") {
+            const apiKey = ""; // Canvas handles this automatically
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: text }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceName } } // Charon is an "Informative" voice, good for a wizard!
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                
+                if (part && part.inlineData && part.inlineData.data) {
+                    let sampleRate = 24000;
+                    const rateMatch = part.inlineData.mimeType.match(/rate=(\d+)/);
+                    if (rateMatch) sampleRate = parseInt(rateMatch[1], 10);
+
+                    const pcmData = base64ToArrayBuffer(part.inlineData.data);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    return URL.createObjectURL(wavBlob);
+                }
+            } catch (e) {
+                console.error("TTS fetch failed", e);
+            }
+            return null;
+        }
+
+        async function fetchGeminiText(userQuery, systemPrompt = "", retries = 3, delay = 1000) {
+            const apiKey = ""; // Canvas provides this automatically!
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }]
+            };
+            if (systemPrompt) {
+                payload.systemInstruction = { parts: [{ text: systemPrompt }] };
+            }
+            
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0) {
+                         return result.candidates[0].content.parts[0].text;
+                    }
+                } catch (e) {
+                    if (i < retries - 1) {
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2; // Exponential backoff for safety
+                    }
+                }
+            }
+            return null;
+        }
+
         function generateProblem() {
+            if (hintText) hintText.innerText = '';
+
             if (isSameQuestion) {
                 // Keep the same question, just clear input
                 mathInputEl.value = '';
@@ -433,6 +654,49 @@
         function handleEnter(e) {
             if (e.key === 'Enter') {
                 chargeSword();
+            }
+        }
+
+        async function getHint() {
+            const equation = equationEl.innerText;
+            if (equation === '?') return;
+
+            hintBtn.disabled = true;
+            hintBtn.innerText = "Consulting Wizard...";
+            hintText.innerText = "The wizard is pondering your equation...";
+            hintText.style.color = "#c5c6c7";
+
+            const prompt = `Explain how to solve this math problem: ${equation} in a way that a 5 year old will understand. Do NOT tell them the final answer. Give them a fun, simple conceptual way to think about it using apples, blocks, or counting. Keep it under 3 sentences.`;
+            const systemPrompt = "You are a helpful and wise wizard guiding a young Math Knight named Chloe. You must never reveal the exact numerical answer. Address her directly by name occasionally.";
+
+            const hint = await fetchGeminiText(prompt, systemPrompt);
+
+            if (hint) {
+                const cleanHint = hint.replace(/["*]/g, '').trim();
+                hintText.innerText = `🧙‍♂️ "${cleanHint}"`;
+                hintText.style.color = "#e056fd";
+                hintBtn.innerText = "Wizard is speaking...";
+
+                // Ask the TTS model to read the hint out loud
+                const audioUrl = await fetchGeminiTTS(`Say in a wise, gentle voice: ${cleanHint}`, 'Charon');
+                
+                if (audioUrl) {
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                    audio.onended = () => {
+                        hintBtn.disabled = false;
+                        hintBtn.innerText = "Ask Wizard for Hint";
+                    };
+                } else {
+                    // Fallback if audio fails to load
+                    hintBtn.disabled = false;
+                    hintBtn.innerText = "Ask Wizard for Hint";
+                }
+            } else {
+                hintText.innerText = "The wizard is currently meditating. Try again later!";
+                hintText.style.color = "#ff6b6b";
+                hintBtn.disabled = false;
+                hintBtn.innerText = "Ask Wizard for Hint";
             }
         }
 
@@ -564,19 +828,33 @@
         }
 
         function enemyDefeated() {
-            messageLogEl.innerText = "Demon Banished!";
+            messageLogEl.innerText = "Demon Banished! Forging your legend...";
             messageLogEl.style.color = "#d4af37";
             enemyContainer.classList.add('enemy-dead');
             
             enemiesDefeatedInLevel++;
+            const currentEnemyName = enemyNameEl.innerText;
             
-            setTimeout(() => {
-                if (enemiesDefeatedInLevel >= enemiesPerLevel) {
-                    levelUp();
-                } else {
-                    spawnNextEnemy();
+            // Ask Gemini to narrate the kill
+            fetchGeminiText(
+                `Describe the heroic Math Knight, Chloe, striking the final blow and obliterating a ${currentEnemyName} in one dramatic, epic sentence. Keep it under 15 words.`,
+                `You are a dramatic fantasy game narrator.`
+            ).then(story => {
+                if (story) {
+                    // Clean up quotes and markdown asterisks
+                    messageLogEl.innerText = story.replace(/["*]/g, '').trim();
+                    messageLogEl.style.color = "#2ecc71";
                 }
-            }, 1500);
+                
+                // Wait 2.5 seconds to let the player read the AI lore before spawning the next
+                setTimeout(() => {
+                    if (enemiesDefeatedInLevel >= enemiesPerLevel) {
+                        levelUp();
+                    } else {
+                        spawnNextEnemy();
+                    }
+                }, 2500); 
+            });
         }
         
         function levelUp() {
@@ -586,11 +864,22 @@
             
             if (currentLevel > 3) {
                 levelInfoEl.innerText = "VICTORY";
-                messageLogEl.innerText = "VICTORY! You have cleared all 3 levels!";
+                messageLogEl.innerText = "Generating Victory Tale...";
                 messageLogEl.style.color = "#2ecc71";
                 enemyContainer.style.display = 'none';
                 mathUI.style.display = 'none';
                 timingUI.style.display = 'none';
+                
+                fetchGeminiText(
+                    `The Math Knight, Chloe, has defeated all 3 levels of demons and saved the realm. Write a two sentence epic conclusion to her journey.`,
+                    `You are a dramatic fantasy narrator.`
+                ).then(story => {
+                    if (story) {
+                        messageLogEl.innerText = story.replace(/["*]/g, '').trim();
+                    } else {
+                        messageLogEl.innerText = "VICTORY! You have cleared all 3 levels!";
+                    }
+                });
             } else {
                 levelInfoEl.innerText = `Level ${currentLevel}`;
                 messageLogEl.innerText = `LEVEL UP! Welcome to Level ${currentLevel}`;
@@ -624,8 +913,20 @@
             mathUI.style.display = 'flex';
             strikeZoneEl.classList.remove('show-zone');
             
-            messageLogEl.innerText = "A new Demon appears! Prime your magic.";
+            messageLogEl.innerText = `A new ${enemyData.name} appears! Prime your magic.`;
             messageLogEl.style.color = "#a8dadc";
+            
+            // Asynchronously fetch a custom enemy taunt
+            fetchGeminiText(
+                `Taunt the player, Chloe, in one short, menacing sentence. Keep it under 10 words. Try to use her name.`,
+                `You are a dark fantasy monster named ${enemyData.name}. You are fighting the Math Knight, Chloe.`
+            ).then(taunt => {
+                // Ensure we only show the taunt if the player hasn't already charged their magic
+                if (taunt && timingUI.style.display === 'none') {
+                    messageLogEl.innerText = `"${taunt.replace(/["*]/g, '').trim()}"`;
+                    messageLogEl.style.color = "#ff6b6b";
+                }
+            });
             
             generateProblem();
         }
