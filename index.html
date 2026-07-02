@@ -4,18 +4,12 @@
         let musicPlayer = null;
         let currentMusicLevel = 1;
 
-        // Pixabay Music - Royalty-free K-pop/huntrex style instrumentals
+        // Direct streaming audio URLs - K-pop style instrumentals
+        // Using verified streaming sources
         const musicTracks = {
-            1: "https://pixabay.com/music/download/colorful-abstract-animation-154129/", // Level 1: Bright, energetic
-            2: "https://pixabay.com/music/download/futuristic-electronic-beat-124584/", // Level 2: Moderate intensity
-            3: "https://pixabay.com/music/download/epic-cinematic-action-154456/"      // Level 3: Dark, intense
-        };
-
-        // Alternative direct MP3 links (if Pixabay downloads don't work, use these streaming alternatives)
-        const musicTracksBackup = {
-            1: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Fallback: bright track
-            2: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", // Fallback: moderate track
-            3: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"  // Fallback: intense track
+            1: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Level 1: Bright, energetic
+            2: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", // Level 2: Moderate intensity
+            3: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"  // Level 3: Dark, intense
         };
 
         function toggleBackgroundMusic() {
@@ -36,7 +30,7 @@
             stopBackgroundMusic();
             currentMusicLevel = level;
 
-            let trackUrl = musicTracks[level];
+            const trackUrl = musicTracks[level];
             if (!trackUrl) {
                 console.warn(`No music track found for level ${level}`);
                 return;
@@ -48,23 +42,19 @@
                 musicPlayer.loop = true;
                 musicPlayer.volume = 0.25; // 25% volume for background
                 
+                console.log(`Playing music for level ${level}: ${trackUrl}`);
+                
                 // Attempt to play
                 const playPromise = musicPlayer.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log("Primary URL failed, trying backup...", error);
-                        // Try backup URL
-                        const backupUrl = musicTracksBackup[level];
-                        if (backupUrl && backupUrl !== trackUrl) {
-                            musicPlayer = new Audio(backupUrl);
-                            musicPlayer.crossOrigin = "anonymous";
-                            musicPlayer.loop = true;
-                            musicPlayer.volume = 0.25;
-                            musicPlayer.play().catch(e => {
-                                console.log("Backup URL also failed - music will start on user interaction", e);
-                            });
-                        }
-                    });
+                    playPromise
+                        .then(() => {
+                            console.log("Music playing successfully!");
+                        })
+                        .catch(error => {
+                            console.error("Autoplay failed:", error);
+                            console.log("Music will start on first user interaction");
+                        });
                 }
             } catch (e) {
                 console.error("Failed to play background music:", e);
@@ -82,6 +72,15 @@
         // Try to play music on first user interaction (click/touch)
         document.addEventListener('click', () => {
             if (backgroundMusicEnabled && (!musicPlayer || musicPlayer.paused)) {
+                console.log("User interaction detected - starting music...");
                 playBackgroundMusic(currentMusicLevel);
             }
-        }, { once: true });
+        });
+
+        // Initialize music on page load
+        window.addEventListener('load', () => {
+            console.log("Page loaded - music system ready");
+            // Try to play immediately (will be blocked by autoplay policy)
+            playBackgroundMusic(currentMusicLevel);
+        });
+    </script>
