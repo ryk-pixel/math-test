@@ -1,86 +1,857 @@
-    <script>
-        // --- Background Music System ---
-        let backgroundMusicEnabled = true;
-        let musicPlayer = null;
-        let currentMusicLevel = 1;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Knight</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Lato:wght@400;700&display=swap');
 
-        // Direct streaming audio URLs - K-pop style instrumentals
-        // Using verified streaming sources
-        const musicTracks = {
-            1: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Level 1: Bright, energetic
-            2: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", // Level 2: Moderate intensity
-            3: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"  // Level 3: Dark, intense
+        body {
+            background-color: #1a1a2e;
+            color: #fff;
+            font-family: 'Lato', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #game-wrapper {
+            background: #16213e;
+            border: 4px solid #d4af37; 
+            border-radius: 12px;
+            width: 95vw;
+            max-width: 1600px;
+            height: 95vh;
+            padding: 3vh 3vw;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            color: #d4af37;
+            font-size: clamp(2rem, 5vw, 4rem);
+            margin-top: 0;
+            margin-bottom: 1vh;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #level-info {
+            font-size: clamp(1.2rem, 2vw, 2rem);
+            color: #a8dadc;
+            margin-bottom: 2vh;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #battle-arena {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f3460;
+            padding: 2vh 5vw;
+            border-radius: 8px;
+            margin-bottom: 3vh;
+            position: relative;
+            border: 2px solid #2a4b7c;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        #health-bar-bg {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 15px;
+            background: #333;
+            border-radius: 8px;
+            border: 2px solid #222;
+            overflow: hidden;
+        }
+
+        #health-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: #e94560;
+            transition: width 0.3s ease-out;
+        }
+
+        #hero-container {
+            width: 25vw;
+            max-width: 300px;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            transition: transform 0.3s;
+        }
+
+        #hero-img {
+            width: 100%;
+            height: 100%;
+            max-height: 40vh;
+            object-fit: contain; 
+            filter: drop-shadow(0 0 10px rgba(242, 169, 0, 0.3)); 
+            animation: breathe 2.5s infinite ease-in-out;
+            transition: filter 0.3s;
+        }
+
+        .hero-charged #hero-img {
+            filter: drop-shadow(0 0 35px rgba(242, 169, 0, 1)) brightness(1.2) !important;
+        }
+
+        #enemy-container {
+            position: relative;
+            width: 25vw;
+            max-width: 300px;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #enemy-name {
+            position: absolute;
+            top: -50px;
+            font-size: clamp(14px, 1.5vw, 24px);
+            color: #ff6b6b;
+            font-weight: bold;
+            width: 100%;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        #enemy-img {
+            width: 100%;
+            height: 100%;
+            max-height: 40vh;
+            object-fit: contain; 
+            filter: drop-shadow(0 0 15px rgba(138, 43, 226, 0.6));
+            animation: float-idle 3s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.02) translateY(-1vh); }
+        }
+
+        @keyframes float-idle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2vh); }
+        }
+
+        .hero-attacking {
+            animation: dash-attack 0.5s ease-in-out forwards;
+        }
+        @keyframes dash-attack {
+            0% { transform: translateX(0) scale(1); }
+            40% { transform: translateX(35vw) scale(1.1); }
+            50% { transform: translateX(35vw) scale(1.1); }
+            100% { transform: translateX(0) scale(1); }
+        }
+
+        .enemy-hit { animation: shake 0.4s; filter: brightness(2) !important; }
+        .enemy-dead #enemy-movement-wrapper { animation: fade-out-drop 1s forwards; }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-1vw); }
+            50% { transform: translateX(1vw); }
+            75% { transform: translateX(-1vw); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes fade-out-drop {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(10vh); }
+        }
+
+        .move-side-to-side { animation: side-side 3s ease-in-out infinite alternate; }
+        .move-diagonal { animation: diagonal 2.5s ease-in-out infinite alternate; }
+        .move-circular { animation: circular 4s linear infinite; }
+        .move-blink { animation: blink-jump 4s infinite; }
+        .move-random { animation: random-dart 3s infinite; }
+
+        @keyframes side-side {
+            0% { transform: translateX(-15vw); }
+            100% { transform: translateX(15vw); }
+        }
+        @keyframes diagonal {
+            0% { transform: translate(-10vw, -10vh); }
+            100% { transform: translate(10vw, 10vh); }
+        }
+        @keyframes circular {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(10vw, -8vh); }
+            50% { transform: translate(0, 0); }
+            75% { transform: translate(-10vw, 8vh); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes blink-jump {
+            0%, 20% { opacity: 1; transform: translate(0,0); }
+            25% { opacity: 0; transform: translate(0,0); }
+            30% { opacity: 0; transform: translate(-12vw, 5vh); }
+            35%, 60% { opacity: 1; transform: translate(-12vw, 5vh); }
+            65% { opacity: 0; transform: translate(-12vw, 5vh); }
+            70% { opacity: 0; transform: translate(10vw, -8vh); }
+            75%, 95% { opacity: 1; transform: translate(10vw, -8vh); }
+            100% { opacity: 0; transform: translate(0,0); }
+        }
+        @keyframes random-dart {
+            0%, 100% { transform: translate(0,0); }
+            15%, 25% { transform: translate(12vw, -3vh); }
+            40%, 50% { transform: translate(-10vw, -8vh); }
+            65%, 75% { transform: translate(-12vw, 6vh); }
+            90% { transform: translate(8vw, 5vh); }
+        }
+
+        #arena-strike-zone {
+            position: absolute;
+            top: 5vh;
+            bottom: 5vh; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: clamp(100px, 15vw, 200px); 
+            border: 4px dashed rgba(46, 204, 113, 0.6);
+            background: rgba(46, 204, 113, 0.15);
+            border-radius: 12px;
+            z-index: 1; 
+            display: none;
+            pointer-events: none;
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.3), inset 0 0 10px rgba(46, 204, 113, 0.2);
+        }
+
+        .show-zone {
+            display: block !important;
+            animation: pulse-zone 1s infinite alternate;
+        }
+
+        @keyframes pulse-zone {
+            0% { border-color: rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.1); }
+            100% { border-color: rgba(46, 204, 113, 0.9); background: rgba(46, 204, 113, 0.25); box-shadow: 0 0 30px rgba(46, 204, 113, 0.6); }
+        }
+
+        #slash-effect {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10,90 L90,10" stroke="%23fff" stroke-width="8" stroke-linecap="round"/><path d="M10,90 L90,10" stroke="%23f2a900" stroke-width="4" stroke-linecap="round"/></svg>') no-repeat center;
+            background-size: contain;
+            opacity: 0;
+            z-index: 20;
+            pointer-events: none;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+        .show-slash { animation: slash-anim 0.3s ease-out forwards; }
+        @keyframes slash-anim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); } }
+
+        #message-log {
+            min-height: 10vh;
+            font-style: italic;
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
+            color: #a8dadc;
+            margin-bottom: 2vh;
+            padding: 1.5vh;
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #math-ui {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 4vw;
+            margin-bottom: 2vh;
+            width: 100%;
+        }
+        #math-core-ui, #math-hint-ui {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5vh;
+            flex: 1;
+            min-width: 250px;
+            max-width: 450px;
+        }
+        #equation { font-size: clamp(32px, 4vw, 48px); font-weight: bold; margin: 0; }
+        #math-input {
+            font-size: clamp(24px, 3vw, 36px); 
+            padding: 1vh 2vw; 
+            width: 200px; 
+            text-align: center;
+            border-radius: 8px; border: 3px solid #d4af37; background: #1a1a2e; color: white;
+            outline: none; transition: box-shadow 0.2s;
+        }
+        #math-input:focus { box-shadow: 0 0 15px rgba(212, 175, 55, 0.6); }
+
+        #hint-corner-btn {
+            position: absolute;
+            top: 3vh;
+            right: 3vw;
+            background: linear-gradient(180deg, #9b59b6, #8e44ad);
+            border-color: #8e44ad;
+            box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
+            font-size: clamp(14px, 1.5vw, 20px);
+            padding: 1vh 2vw;
+            z-index: 50;
+        }
+
+        #hint-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        #hint-modal-content {
+            background: #16213e;
+            border: 4px solid #9b59b6;
+            border-radius: 12px;
+            padding: 4vh 4vw;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(155, 89, 182, 0.5);
+        }
+
+        #hint-modal h2 {
+            color: #e056fd;
+            font-family: 'Cinzel', serif;
+            font-size: clamp(24px, 3vw, 36px);
+            margin-top: 0;
+        }
+
+        #visual-hint-container {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            margin: 3vh 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+            align-items: center;
+        }
+
+        .hint-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5vw;
+            background: rgba(255,255,255,0.05);
+            padding: 1.5vh 2vw;
+            border-radius: 12px;
+            max-width: 100%;
+            line-height: 1.2;
+        }
+
+        .hint-crossed {
+            opacity: 0.3;
+            filter: grayscale(1);
+            position: relative;
+        }
+        .hint-crossed::after {
+            content: "❌";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8em;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        #close-hint-btn {
+            background: linear-gradient(180deg, #e74c3c, #c0392b);
+            border-color: #c0392b;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            margin-top: 2vh;
+        }
+
+        #math-ui {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2vh;
+            margin-bottom: 2vh;
+            width: 100%;
+        }
+        
+        #timing-ui {
+            display: none;
+            width: 100%;
+            margin: 0 auto;
+            margin-bottom: 2vh;
+        }
+
+        button {
+            background: linear-gradient(180deg, #f1c40f, #f39c12);
+            color: #1a1a2e; 
+            font-family: 'Cinzel', serif; 
+            font-size: clamp(20px, 2vw, 30px); 
+            font-weight: bold;
+            border: 2px solid #d4af37; 
+            padding: 2vh 4vw; 
+            border-radius: 12px;
+            cursor: pointer; 
+            transition: transform 0.1s, filter 0.2s; 
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+        button:hover { filter: brightness(1.2); transform: scale(1.05); }
+        button:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <button id="hint-corner-btn" onclick="openHintModal()">Ask Wizard for Hint</button>
+        <h1>Math Knight</h1>
+        <div id="level-info">Level 1</div>
+        
+        <div id="battle-arena">
+            <div id="hero-container">
+                <img id="hero-img" src="hero_action.png" alt="Hero" onerror="this.src='https://placehold.co/120x160/333/f2a900?text=Hero'">
+            </div>
+            
+            <div id="enemy-container">
+                <div id="health-bar-bg"><div id="health-bar-fill"></div></div>
+                <div id="enemy-name">Demon</div>
+                <div id="arena-strike-zone"></div>
+                <div id="slash-effect"></div>
+                
+                <div id="enemy-movement-wrapper" class="move-side-to-side" style="z-index: 10;">
+                    <img id="enemy-img" src="demon_4_action.png" alt="Demon" onerror="this.src='https://placehold.co/120x160/333/e94560?text=Demon'">
+                </div>
+            </div>
+        </div>
+
+        <div id="message-log">A new Demon appears! Calculate to prime your blade.</div>
+
+        <div id="math-ui">
+            <span id="equation">?</span>
+            <input type="number" id="math-input" placeholder="?" onkeypress="handleEnter(event)" />
+            <button onclick="chargeSword()">Charge Magic</button>
+        </div>
+
+        <div id="timing-ui">
+            <button onclick="slash()">⚡ SLASH! ⚡</button>
+        </div>
+    </div>
+
+    <div id="hint-modal">
+        <div id="hint-modal-content">
+            <h2>Wizard's Visual Hint</h2>
+            <div id="visual-hint-container"></div>
+            <button id="close-hint-btn" onclick="closeHintModal()">Understood!</button>
+        </div>
+    </div>
+
+    <script>
+        let isAudioInitialized = false;
+        let synthMiss, synthParry, synthHit, noiseHit;
+
+        async function initAudio() {
+            if (isAudioInitialized) return;
+            await Tone.start();
+            
+            synthMiss = new Tone.NoiseSynth({
+                noise: { type: 'pink' },
+                envelope: { attack: 0.1, decay: 0.2, sustain: 0, release: 0.1 },
+                volume: -10
+            }).toDestination();
+            
+            synthParry = new Tone.MetalSynth({
+                frequency: 200,
+                envelope: { attack: 0.001, decay: 0.2, release: 0.01 },
+                harmonicity: 5.1,
+                modulationIndex: 32,
+                resonance: 4000,
+                octaves: 1.5,
+                volume: -5
+            }).toDestination();
+            
+            synthHit = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'fmtriangle', modulationType: 'sine' },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 1.5 },
+                volume: -5
+            }).toDestination();
+            
+            noiseHit = new Tone.NoiseSynth({
+                noise: { type: 'white' },
+                envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 },
+                volume: -10
+            }).toDestination();
+
+            isAudioInitialized = true;
+        }
+
+        function playMissSound() { if (isAudioInitialized) synthMiss.triggerAttackRelease("8n"); }
+        function playParrySound() { if (isAudioInitialized) synthParry.triggerAttackRelease("16n"); }
+        function playHitSound() {
+            if (isAudioInitialized) {
+                synthHit.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n");
+                noiseHit.triggerAttackRelease("16n");
+            }
+        }
+
+        let currentAnswer = 0;
+        let playerCurrentAnswer = 0;
+        let currentNum1 = 0;
+        let currentNum2 = 0;
+        let currentOp = '+';
+        let enemyMaxHP = 4;
+        let enemyHP = 4;
+        let isAttacking = false;
+        let isSameQuestion = false;
+        
+        let currentLevel = 1;
+        let enemiesDefeatedInLevel = 0;
+        const enemiesPerLevel = 4;
+        let difficultyLevel = 0; 
+        let questionDamage = 1;  
+        let currentAnimSpeed = 3;
+        
+        const demonList = [
+            { name: "Dust-Mite Golem", file: "demon_1_action.png", moveClass: "move-side-to-side", baseSpeed: 3 },
+            { name: "Chaos Construct", file: "demon_2-action.png", moveClass: "move-diagonal", baseSpeed: 2.5 },
+            { name: "Rune Weaver", file: "demon_3-action.png", moveClass: "move-circular", baseSpeed: 4 },
+            { name: "Void Emissary", file: "demon_4_action.png", moveClass: "move-blink", baseSpeed: 4 },
+            { name: "Shadow Dancer", file: "demon_1_action.png", moveClass: "move-random", baseSpeed: 3 }
+        ];
+
+        const equationEl = document.getElementById('equation');
+        const mathInputEl = document.getElementById('math-input');
+        const messageLogEl = document.getElementById('message-log');
+        const enemyHealthEl = document.getElementById('health-bar-fill');
+        const mathUI = document.getElementById('math-ui');
+        const timingUI = document.getElementById('timing-ui');
+        
+        const heroContainer = document.getElementById('hero-container');
+        const enemyContainer = document.getElementById('enemy-container');
+        const enemyNameEl = document.getElementById('enemy-name');
+        const enemyMovementWrapper = document.getElementById('enemy-movement-wrapper');
+        const enemyImg = document.getElementById('enemy-img');
+        const slashEffect = document.getElementById('slash-effect');
+        const strikeZoneEl = document.getElementById('arena-strike-zone');
+        const levelInfoEl = document.getElementById('level-info');
+
+        function generateProblem() {
+            if (isSameQuestion) {
+                mathInputEl.value = '';
+                mathInputEl.focus();
+                return; 
+            }
+
+            let num1, num2;
+
+            if (currentLevel === 1) { 
+                if (difficultyLevel === 0) { num1 = Math.floor(Math.random() * 9) + 1; num2 = Math.floor(Math.random() * 9) + 1; questionDamage = 1; }
+                else if (difficultyLevel === 1) { num1 = Math.floor(Math.random() * 9) + 1; num2 = Math.floor(Math.random() * 10) + 10; questionDamage = 2; }
+                else { num1 = Math.floor(Math.random() * 9) + 1; num2 = Math.floor(Math.random() * 40) + 20; questionDamage = 3; }
+                currentAnswer = num1 + num2;
+                currentOp = '+';
+                equationEl.innerText = `${num1} + ${num2} = ?`;
+            } else if (currentLevel === 2) { 
+                if (difficultyLevel === 0) { num1 = Math.floor(Math.random() * 9) + 1; num2 = Math.floor(Math.random() * num1); questionDamage = 1; }
+                else if (difficultyLevel === 1) { num1 = Math.floor(Math.random() * 10) + 10; num2 = Math.floor(Math.random() * 9) + 1; questionDamage = 2; }
+                else { num1 = Math.floor(Math.random() * 30) + 20; num2 = Math.floor(Math.random() * (num1 - 10)) + 10; questionDamage = 3; }
+                currentAnswer = num1 - num2;
+                currentOp = '-';
+                equationEl.innerText = `${num1} - ${num2} = ?`;
+            } else { 
+                if (difficultyLevel === 0) { num1 = Math.floor(Math.random() * 4) + 2; num2 = Math.floor(Math.random() * 4) + 2; questionDamage = 1; }
+                else if (difficultyLevel === 1) { num1 = Math.floor(Math.random() * 8) + 2; num2 = Math.floor(Math.random() * 4) + 2; questionDamage = 2; }
+                else { num1 = Math.floor(Math.random() * 4) + 6; num2 = Math.floor(Math.random() * 4) + 6; questionDamage = 3; }
+                currentAnswer = num1 * num2;
+                currentOp = '×';
+                equationEl.innerText = `${num1} × ${num2} = ?`;
+            }
+            
+            currentNum1 = num1;
+            currentNum2 = num2;
+
+            mathInputEl.value = '';
+            mathInputEl.focus();
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') {
+                chargeSword();
+            }
+        }
+
+        function openHintModal() {
+            const container = document.getElementById('visual-hint-container');
+            container.innerHTML = ''; 
+            
+            const renderOrbs = (count) => Array(count).fill('🔮').join('');
+
+            if (currentOp === '+') {
+                container.innerHTML = `
+                    <div class="hint-group">${renderOrbs(currentNum1)}</div>
+                    <div>➕</div>
+                    <div class="hint-group">${renderOrbs(currentNum2)}</div>
+                `;
+            } else if (currentOp === '-') {
+                let html = '<div class="hint-group">';
+                for(let i = 0; i < currentNum1; i++) {
+                    if (i < currentNum1 - currentNum2) {
+                        html += `<span>🔮</span>`;
+                    } else {
+                        html += `<span class="hint-crossed">🔮</span>`;
+                    }
+                }
+                html += '</div>';
+                html += '<div style="font-size: 0.6em; color: #a8dadc; margin-top: 1vh;">(Count the remaining orbs)</div>';
+                container.innerHTML = html;
+            } else if (currentOp === '×') {
+                let html = '';
+                for(let r = 0; r < currentNum1; r++) {
+                    html += `<div class="hint-group">${renderOrbs(currentNum2)}</div>`;
+                }
+                container.innerHTML = html;
+            }
+
+            document.getElementById('hint-modal').style.display = 'flex';
+        }
+
+        function closeHintModal() {
+            document.getElementById('hint-modal').style.display = 'none';
+            mathInputEl.focus();
+        }
+
+        function chargeSword() {
+            if (mathInputEl.value === '') return;
+            
+            initAudio(); 
+            
+            playerCurrentAnswer = parseInt(mathInputEl.value);
+            
+            messageLogEl.innerText = "Magic Charged! Strike when the demon enters the zone!";
+            messageLogEl.style.color = "#f2a900";
+            
+            heroContainer.classList.add('hero-charged');
+            strikeZoneEl.classList.add('show-zone');
+            
+            mathUI.style.display = 'none';
+            timingUI.style.display = 'block';
+        }
+
+        function slash() {
+            if (isAttacking) return;
+            isAttacking = true;
+            
+            heroContainer.classList.remove('hero-charged');
+            heroContainer.classList.add('hero-attacking');
+
+            setTimeout(() => {
+                evaluateHit();
+            }, 250);
+
+            setTimeout(() => {
+                heroContainer.classList.remove('hero-attacking');
+            }, 500); 
+        }
+
+        function evaluateHit() {
+            slashEffect.classList.add('show-slash');
+            setTimeout(() => slashEffect.classList.remove('show-slash'), 300);
+            
+            // Hitbox Shaving fix applied here:
+            const enemyRectRaw = enemyImg.getBoundingClientRect();
+            const shaveWidth = enemyRectRaw.width * 0.3; // shave 30% off left and right
+            
+            const enemyRect = {
+                left: enemyRectRaw.left + shaveWidth,
+                right: enemyRectRaw.right - shaveWidth,
+                top: enemyRectRaw.top,
+                bottom: enemyRectRaw.bottom
+            };
+            const zoneRect = strikeZoneEl.getBoundingClientRect();
+
+            strikeZoneEl.classList.remove('show-zone');
+
+            const isOverlapping = !(
+                enemyRect.right < zoneRect.left ||
+                enemyRect.left > zoneRect.right ||
+                enemyRect.bottom < zoneRect.top ||
+                enemyRect.top > zoneRect.bottom
+            );
+
+            if (!isOverlapping) {
+                playMissSound();
+                messageLogEl.innerText = "Whiff! You missed! The Demon evades and moves faster!";
+                messageLogEl.style.color = "#e94560";
+                
+                currentAnimSpeed = Math.max(0.5, currentAnimSpeed * 0.75);
+                enemyMovementWrapper.style.animationDuration = currentAnimSpeed + 's';
+                
+                difficultyLevel = Math.max(0, difficultyLevel - 1);
+                isSameQuestion = false;
+
+            } else {
+                if (playerCurrentAnswer !== currentAnswer) {
+                    playParrySound();
+                    let hint = playerCurrentAnswer > currentAnswer ? "Too High" : "Too Low";
+                    messageLogEl.innerText = `Parried! Math flawed (${hint})! Try the same equation again.`;
+                    messageLogEl.style.color = "#e67e22";
+                    
+                    difficultyLevel = Math.max(0, difficultyLevel - 1);
+                    isSameQuestion = true;
+                    
+                    enemyContainer.classList.add('enemy-hit');
+                    setTimeout(() => enemyContainer.classList.remove('enemy-hit'), 400);
+
+                } else {
+                    playHitSound();
+                    messageLogEl.innerText = `Direct Hit! Perfect Math! (-${questionDamage} HP)`;
+                    messageLogEl.style.color = "#2ecc71";
+                    
+                    enemyHP -= questionDamage;
+                    difficultyLevel = Math.min(2, difficultyLevel + 1);
+                    isSameQuestion = false;
+
+                    enemyContainer.classList.add('enemy-hit');
+                    setTimeout(() => enemyContainer.classList.remove('enemy-hit'), 400);
+                }
+            }
+
+            updateHealthBar();
+
+            setTimeout(() => {
+                if (enemyHP <= 0) {
+                    enemyDefeated();
+                } else {
+                    resetForNextTurn();
+                }
+            }, 1000);
+        }
+
+        function updateHealthBar() {
+            let displayHP = enemyHP < 0 ? 0 : enemyHP;
+            let hpPercentage = (displayHP / enemyMaxHP) * 100;
+            enemyHealthEl.style.width = hpPercentage + '%';
+        }
+
+        function resetForNextTurn() {
+            timingUI.style.display = 'none';
+            mathUI.style.display = 'flex';
+            strikeZoneEl.classList.remove('show-zone');
+            
+            if (enemyHP > 0) {
+                messageLogEl.innerText = "Keep up the pressure! Calculate the next strike.";
+                messageLogEl.style.color = "#c5c6c7";
+            }
+            
+            generateProblem();
+            isAttacking = false;
+        }
+
+        function enemyDefeated() {
+            enemyContainer.classList.add('enemy-dead');
+            
+            enemiesDefeatedInLevel++;
+            const currentEnemyName = enemyNameEl.innerText;
+            
+            messageLogEl.innerText = `With a mighty swing, Chloe obliterated the ${currentEnemyName}!`;
+            messageLogEl.style.color = "#2ecc71";
+            
+            setTimeout(() => {
+                if (enemiesDefeatedInLevel >= enemiesPerLevel) {
+                    levelUp();
+                } else {
+                    spawnNextEnemy();
+                }
+            }, 2500); 
+        }
+        
+        function levelUp() {
+            currentLevel++;
+            enemiesDefeatedInLevel = 0;
+            difficultyLevel = 0; 
+            
+            if (currentLevel > 3) {
+                levelInfoEl.innerText = "VICTORY";
+                messageLogEl.innerText = "VICTORY! Chloe has cleared all levels and saved the realm!";
+                messageLogEl.style.color = "#2ecc71";
+                enemyContainer.style.display = 'none';
+                mathUI.style.display = 'none';
+                timingUI.style.display = 'none';
+                
+                // Fade to silence upon absolute victory
+                if (isMusicPlaying) bgmTracks[currentLevelMusic].pause();
+            } else {
+                levelInfoEl.innerText = `Level ${currentLevel}`;
+                messageLogEl.innerText = `LEVEL UP! Welcome to Level ${currentLevel}`;
+                messageLogEl.style.color = "#a8dadc";
+                
+                // Transition to the new heavier K-Pop beat for the next level!
+                playLevelMusic(currentLevel);
+                
+                setTimeout(spawnNextEnemy, 2000);
+            }
+        }
+
+        function spawnNextEnemy() {
+            enemyContainer.classList.remove('enemy-dead');
+            
+            const enemyData = demonList[Math.floor(Math.random() * demonList.length)];
+            
+            enemyImg.src = enemyData.file;
+            enemyMovementWrapper.className = '';
+            enemyMovementWrapper.classList.add(enemyData.moveClass);
+            
+            currentAnimSpeed = enemyData.baseSpeed;
+            enemyMovementWrapper.style.animationDuration = currentAnimSpeed + 's';
+
+            enemyNameEl.innerText = enemyData.name;
+            
+            enemyMaxHP = 4;
+            enemyHP = enemyMaxHP;
+            updateHealthBar();
+            
+            isSameQuestion = false;
+            isAttacking = false;
+            
+            timingUI.style.display = 'none';
+            mathUI.style.display = 'flex';
+            strikeZoneEl.classList.remove('show-zone');
+            
+            messageLogEl.innerText = `A new ${enemyData.name} appears! Prime your magic.`;
+            messageLogEl.style.color = "#a8dadc";
+            
+            generateProblem();
+        }
+
+        window.onload = () => {
+            spawnNextEnemy();
         };
 
-        function toggleBackgroundMusic() {
-            backgroundMusicEnabled = !backgroundMusicEnabled;
-            const btn = document.getElementById('music-toggle-btn');
-            btn.innerText = backgroundMusicEnabled ? '🔊 Music: ON' : '🔇 Music: OFF';
-            
-            if (backgroundMusicEnabled) {
-                playBackgroundMusic(currentMusicLevel);
-            } else {
-                stopBackgroundMusic();
-            }
-        }
-
-        async function playBackgroundMusic(level) {
-            if (!backgroundMusicEnabled) return;
-
-            stopBackgroundMusic();
-            currentMusicLevel = level;
-
-            const trackUrl = musicTracks[level];
-            if (!trackUrl) {
-                console.warn(`No music track found for level ${level}`);
-                return;
-            }
-
-            try {
-                musicPlayer = new Audio(trackUrl);
-                musicPlayer.crossOrigin = "anonymous";
-                musicPlayer.loop = true;
-                musicPlayer.volume = 0.25; // 25% volume for background
-                
-                console.log(`Playing music for level ${level}: ${trackUrl}`);
-                
-                // Attempt to play
-                const playPromise = musicPlayer.play();
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            console.log("Music playing successfully!");
-                        })
-                        .catch(error => {
-                            console.error("Autoplay failed:", error);
-                            console.log("Music will start on first user interaction");
-                        });
-                }
-            } catch (e) {
-                console.error("Failed to play background music:", e);
-            }
-        }
-
-        function stopBackgroundMusic() {
-            if (musicPlayer) {
-                musicPlayer.pause();
-                musicPlayer.currentTime = 0;
-                musicPlayer = null;
-            }
-        }
-
-        // Try to play music on first user interaction (click/touch)
-        document.addEventListener('click', () => {
-            if (backgroundMusicEnabled && (!musicPlayer || musicPlayer.paused)) {
-                console.log("User interaction detected - starting music...");
-                playBackgroundMusic(currentMusicLevel);
-            }
-        });
-
-        // Initialize music on page load
-        window.addEventListener('load', () => {
-            console.log("Page loaded - music system ready");
-            // Try to play immediately (will be blocked by autoplay policy)
-            playBackgroundMusic(currentMusicLevel);
-        });
     </script>
+</body>
+</html>
