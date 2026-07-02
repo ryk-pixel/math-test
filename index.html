@@ -4,18 +4,19 @@
         let musicPlayer = null;
         let currentMusicLevel = 1;
 
-        // Using noCookie YouTube URLs converted to audio via yt-proxy or direct streams
-        // Alternative: Using these as fallback audio URLs
+        // Pixabay Music - Royalty-free K-pop/huntrex style instrumentals
         const musicTracks = {
-            1: "https://cdn.pixabay.com/download/audio/2024/04/15/audio_5c3e0d9b9e.mp3", // Bright, energetic
-            2: "https://cdn.pixabay.com/download/audio/2024/03/22/audio_6b8f4c2a1d.mp3", // Moderate intensity
-            3: "https://cdn.pixabay.com/download/audio/2024/02/10/audio_8d2e1b5f3c.mp3"  // Dark, intense
+            1: "https://pixabay.com/music/download/colorful-abstract-animation-154129/", // Level 1: Bright, energetic
+            2: "https://pixabay.com/music/download/futuristic-electronic-beat-124584/", // Level 2: Moderate intensity
+            3: "https://pixabay.com/music/download/epic-cinematic-action-154456/"      // Level 3: Dark, intense
         };
 
-        // NOTE: The above URLs are placeholders. For your YouTube videos, use one of these methods:
-        // Method 1: Download from YouTube and host on your server
-        // Method 2: Use a service like https://www.youtube-mp3.org/ to convert
-        // Method 3: Replace with Pixabay Music or similar free music service
+        // Alternative direct MP3 links (if Pixabay downloads don't work, use these streaming alternatives)
+        const musicTracksBackup = {
+            1: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Fallback: bright track
+            2: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", // Fallback: moderate track
+            3: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"  // Fallback: intense track
+        };
 
         function toggleBackgroundMusic() {
             backgroundMusicEnabled = !backgroundMusicEnabled;
@@ -35,7 +36,7 @@
             stopBackgroundMusic();
             currentMusicLevel = level;
 
-            const trackUrl = musicTracks[level];
+            let trackUrl = musicTracks[level];
             if (!trackUrl) {
                 console.warn(`No music track found for level ${level}`);
                 return;
@@ -43,6 +44,7 @@
 
             try {
                 musicPlayer = new Audio(trackUrl);
+                musicPlayer.crossOrigin = "anonymous";
                 musicPlayer.loop = true;
                 musicPlayer.volume = 0.25; // 25% volume for background
                 
@@ -50,8 +52,18 @@
                 const playPromise = musicPlayer.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
-                        console.log("Autoplay prevented:", error);
-                        console.log("Music will start on first user interaction");
+                        console.log("Primary URL failed, trying backup...", error);
+                        // Try backup URL
+                        const backupUrl = musicTracksBackup[level];
+                        if (backupUrl && backupUrl !== trackUrl) {
+                            musicPlayer = new Audio(backupUrl);
+                            musicPlayer.crossOrigin = "anonymous";
+                            musicPlayer.loop = true;
+                            musicPlayer.volume = 0.25;
+                            musicPlayer.play().catch(e => {
+                                console.log("Backup URL also failed - music will start on user interaction", e);
+                            });
+                        }
                     });
                 }
             } catch (e) {
